@@ -21,6 +21,10 @@ I sin nuværende form er scriptet noget uorganiseret, og det kunne være nyttigt
 at lave det om til et decideret library. Det kunne også være rart med bredere
 understøttelse af Udinaturens API. Pull requests er velkomne!
 
+Forfatteren har ingen tilknytning til Udinaturen.dk eller Naturstyrelsen.
+Scriptet er ikke godkendt af rettighedshaverne, men bruger et offentligt og
+dokumenteret API.
+
 == English ==
 
 (Udinaturen.dk)[http://udinaturen.dk) offers information about varies events,
@@ -42,3 +46,8 @@ GPS.
 The script is currently somewhat unorganized and it would be useful to turn it
 into an actual library. Wider support for the Udinaturen API would also we
 nice. Pull requests are welcome!
+
+The author has no association with Udinaturen.dk or Naturstyrelsen. The script
+is not endorsed by of the copyright holders, but it uses a publicly available
+and documented API.
+
