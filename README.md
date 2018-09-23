@@ -1,4 +1,4 @@
-= Udinaturen.dk script for Python =
+# Udinaturen.dk script for Python
 (English below)
 
 På [udinaturen.dk](http://udinaturen.dk/) kan man finde information om diverse
@@ -25,9 +25,9 @@ Forfatteren har ingen tilknytning til Udinaturen.dk eller Naturstyrelsen.
 Scriptet er ikke godkendt af rettighedshaverne, men bruger et offentligt og
 dokumenteret API.
 
-== English ==
+### In English
 
-(Udinaturen.dk)[http://udinaturen.dk) offers information about varies events,
+[Udinaturen.dk](http://udinaturen.dk/) offers information about varies events,
 trails and facilities related to the Danish nature. Perfect for planning a trip
 while at home.
 
