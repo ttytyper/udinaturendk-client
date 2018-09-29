@@ -15,6 +15,7 @@ import utm
 import gpxpy
 import gpxpy.gpx
 import HTMLParser
+import sys
 
 class Udinaturen:
     # Info: https://naturstyrelsen.dk/udinaturen/om-udinaturen/
@@ -24,6 +25,7 @@ class Udinaturen:
     # Delay between requests, to avoid overloading the servers
     # TODO: This only introduces delays when turning pages within the same getAllObjects call, not across separate calls. Fix that
     requestDelay=5
+    subCategories={} # Cache subCategories
 
     def __init__(self,limit=1000):
         # How many objects to fetch per request. The website defaults and limits to 1000
@@ -45,7 +47,9 @@ class Udinaturen:
         return objects
 
     def getSubcategories(self):
-        return self.getAllObjects(self.root+'/api/v1/subcategory/?format=json')
+        if(len(self.subCategories)==0):
+            self.subCategories=self.getAllObjects(self.root+'/api/v1/subcategory/?format=json')
+        return self.subCategories
 
 class Facilities(Udinaturen):
     facilities=[]
@@ -66,14 +70,32 @@ class Facilities(Udinaturen):
             subCategoryID=""
         return self.getAllObjects(url=self.root+'/api/v1/facilityread/?format=json&limit='+str(self.limit)+'&subcategory=' + str(subCategoryID))
 
-    # TODO: This function is a bit messy and interely focused on camping facilites. Clean it up and make it more generic
     def GPX(self,newLine='\n'):
         # How to do line breaks
-        # Some Garmin units prefer "\n", others want "<br />". Viking doesn't like any of them
+        # Some Garmin units prefer "\n", others want "<br />". Viking likes "\n", just not when editing waypoints
         br=newLine
         gpx=gpxpy.gpx.GPX()
 
+        # Prefix for names, to make them stand out from other POIs on a GPS device
+        namePrefix="Ud" # Ud(inaturen)
+
+        subCategorySymbols={
+            u"Frit teltningsområde": "Forest",
+            u"Stor lejrplads":       "Picnic Area",
+            u"Lille lejrplads":      "Campground",
+            u"Drikkevandspost":      "Drinking water",
+            u"Toilet":               "Restrooms"
+        }
+
+        attributeFlags={
+            u"Drikkevand": "V",
+            u"Shelter":    "S"
+        }
+
         for f in self.facilities:
+            description=""
+
+            # Extract and convert coordinates
             # Looks like coordinates can be listed as Point or Polygon, in either of these fields
             coord=[]
             for field in ["the_geom","the_geom2"]:
@@ -82,76 +104,56 @@ class Facilities(Udinaturen):
                     break
             latlon=utm.to_latlon(coord[0],coord[1],32,'T')
 
-            attributes=[]
-            for attr in f["attributes"]:
-                attributes.append(self.prettyText(attr["attributename"]))
-            attributes=sorted(list(set(attributes))) # Sort and deduplicate
-
+            # Apply appropriate symbols (icons) based on subcategory
             # https://freegeographytools.com/2008/garmin-gps-unit-waypoint-icons-table
-            symbol=None
-            if(f["subcategoryname"]==u"Frit teltningsområde"):
-                symbol="Forest"
-            elif(f["subcategoryname"]==u"Stor lejrplads"):
-                symbol="Picnic Area"
-            elif(f["subcategoryname"]==u"Lille lejrplads"):
-                symbol="Campground"
-            #if(u"Shelter" in attributes):
-            #    symbol="Fishing Hot Spot Facility"
-
-            # Attributes of particular interest are listed early in the description
-            description=self.prettyText(f["subcategoryname"])+br
-            if(u"Shelter" in attributes):
-                description+="Shelter: Ja"+br
-            if(f["subcategory"]["webbooking"]):
-                description+="Booking: Ja"+br
+            if(f["subcategoryname"] in subCategorySymbols):
+                symbol=subCategorySymbols[f["subcategoryname"]]
             else:
-                description+="Booking: Nej"+br
-            if(u"Drikkevand" in attributes):
-                description+="Drikkevand: Ja"+br
-            else:
-                description+="Drikkevand: Nej"+br
+                symbol=None
 
+            # Apply descriptions
             description+=br
-            if(len(self.prettyText(f["shortdescription"]))):
-                description+=self.prettyText(f["shortdescription"])+br+br
+            if(len(self.prettyText(f["shortdescription"]))>0):
+                # No need to show both short and long description if they're identical
+                if(self.prettyText(f["shortdescription"]) != self.prettyText(f["longdescription"])):
+                    description+=self.prettyText(f["shortdescription"])+br
             if(len(self.prettyText(f["longdescription"]))>0):
                 description+=self.prettyText(f["longdescription"])+br
 
+            # Contact info
             description+=br+"Kontaktinfo:"+br
             description+="- Navn: "+self.prettyText(f["organisation"]["name"])+br
             description+="- Telefon: "+self.prettyText(f["organisation"]["telephone"])+br
             description+="- Email: "+self.prettyText(f["organisation"]["email"])+br
             description+="- Link: "+self.prettyText(f["organisation"]["url"])+br
 
-            description+=br
-            description+="Attributer:"+br
-            description+=br.join(['- '+s for s in attributes])
-
-            description+=br+br
-            description+=self.root + f["resource_uri"]+br
+            # List attributes
+            if(len(f["attributes"])>0):
+                description+=br
+                description+="Attributter:"+br
+                description+=br.join(['- '+self.prettyText(a["attributename"]) for a in f["attributes"]])
 
             # Some attributes are so useful that an indicator in the name makes
             # it easier to pick out interesting facilities from a list of their
             # names
             flags=""
-            if(u"Drikkevand" in attributes):
-                flags+='V' # Vand
-            if(u"Shelter" in attributes):
-                flags+='S' # Shelter
+            for a in f["attributes"]:
+                s=self.prettyText(a["attributename"])
+                if(s in attributeFlags):
+                    flags+=attributeFlags[s]
             if(f["subcategory"]["webbooking"]):
                 flags+='B' # Booking
             if(len(flags)>0):
-                flags+=': ' # End of flags
-            else:
-                flags='-: ' # No interestring attributes
+                flags=' '+flags # Space prefix
 
-            # Prefix for names, to make them stand out from other POIs on a GPS device
-            namePrefix="Ud " # Ud(inaturen)
+            # Direct link to the facility
+            description+=br+br
+            description+=self.root + f["resource_uri"]+br
 
             waypoint=gpxpy.gpx.GPXWaypoint(
                 latitude=latlon[0],
                 longitude=latlon[1],
-                name=namePrefix+flags+self.prettyText(f["name"]),
+                name=namePrefix+flags+': '+self.prettyText(f["name"]),
                 symbol=symbol,
                 # Note: Garmin units only shows comments, not description
                 comment=description,
@@ -180,7 +182,16 @@ facilities=Facilities()
 #facilities.getFromSubCategory(u'Lille lejrplads')
 #facilities.getFromSubCategory(u'Stor lejrplads')
 #facilities.getFromSubCategory(u'Frit teltningsområde')
-facilities.getFromMainCategory(u'Overnatning')
+#facilities.getFromMainCategory(u'Overnatning')
+#facilities.getFromSubCategory(u'Drikkevandspost')
+#facilities.getFromSubCategory(u'Toilet')
 
+# Take main and subcategory names from passed arguments
+for arg in sys.argv:
+    arg=arg.decode('utf-8')
+    facilities.getFromMainCategory(arg)
+    facilities.getFromSubCategory(arg)
+
+#print(json.dumps(facilities.json()))
 print(facilities.GPX())
 eprint("Fetched %s facilities" % len(facilities.json()))
