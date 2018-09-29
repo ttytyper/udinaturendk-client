@@ -85,8 +85,6 @@ class Facilities(Udinaturen):
             attributes=[]
             for attr in f["attributes"]:
                 attributes.append(self.prettyText(attr["attributename"]))
-            for attr in f["subcategory"]["attributes"]:
-                attributes.append(self.prettyText(attr["attributename"]))
             attributes=sorted(list(set(attributes))) # Sort and deduplicate
 
             # https://freegeographytools.com/2008/garmin-gps-unit-waypoint-icons-table
