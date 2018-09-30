@@ -83,7 +83,7 @@ class Facilities(Udinaturen):
             u"Frit teltningsområde": "Forest",
             u"Stor lejrplads":       "Picnic Area",
             u"Lille lejrplads":      "Campground",
-            u"Drikkevandspost":      "Drinking water",
+            u"Drikkevandspost":      "Drinking Water",
             u"Toilet":               "Restrooms"
         }
 
