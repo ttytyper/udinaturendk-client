@@ -84,7 +84,7 @@ class Facilities(Udinaturen):
             u"Stor lejrplads":       "Picnic Area",
             u"Lille lejrplads":      "Campground",
             u"Drikkevandspost":      "Drinking Water",
-            u"Toilet":               "Restrooms"
+            u"Toilet":               "Restroom"
         }
 
         attributeFlags={
