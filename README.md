@@ -1,6 +1,11 @@
 # Udinaturen.dk script for Python
 (English below)
 
+## Obs: Virker ikke længere pga. ny API
+
+Udinaturen.dk har fået ny API som dette script ikke er kompatibelt med.
+Projektet er derfor arkiveret.
+
 På [udinaturen.dk](http://udinaturen.dk/) kan man finde information om diverse
 arrangementer, ruter og faciliter knyttet til Danmarks natur. Det er perfekt
 når man sidder hjemme i sofaen og planlægger en tur.
@@ -26,6 +31,11 @@ Scriptet er ikke godkendt af rettighedshaverne, men bruger et offentligt og
 dokumenteret API.
 
 ### In English
+
+## Note: This script doesn't work anymore due to a new API
+
+Udinaturen.dk has switched to a new API, which is not compatible with this
+script. For that reason, the project has been archived.
 
 [Udinaturen.dk](http://udinaturen.dk/) offers information about varies events,
 trails and facilities related to the Danish nature. Perfect for planning a trip
